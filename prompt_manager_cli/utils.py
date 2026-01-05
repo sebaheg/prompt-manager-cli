@@ -11,13 +11,14 @@ git_hash: "{git_hash}"
 cwd: "{cwd}"
 ---
 
-# Goal
+# Context and goals
 
-# Context
+# Tools, APIs, docs and keys
+- This repo is using uv for package management and virtual environments [uv](https://docs.astral.sh/uv/). The virtual environment is named `.venv`.
 
-# Constraints
+# Constraints and guidelines
 
-# Acceptance criteria
+# Success metrics
 '''
 
 
