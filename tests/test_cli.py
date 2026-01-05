@@ -62,12 +62,12 @@ class TestNewCommand:
         assert "# Acceptance criteria" in content
 
     def test_uses_default_directory(self, tmp_path):
-        """Test that default directory is .prompt-manager/prompts/."""
+        """Test that default directory is .pm/prompts/."""
         with patch("prompt_manager_cli.cli.Path.cwd", return_value=tmp_path):
             result = runner.invoke(app, ["new"])
 
         assert result.exit_code == 0
-        expected_dir = tmp_path / ".prompt-manager" / "prompts"
+        expected_dir = tmp_path / ".pm" / "prompts"
         assert expected_dir.exists()
         files = list(expected_dir.glob("prompt-*.md"))
         assert len(files) == 1

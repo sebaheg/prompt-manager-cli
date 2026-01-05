@@ -3,6 +3,22 @@
 import subprocess
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
+
+DEFAULT_TEMPLATE = '''---
+created_at: "{created_at}"
+git_hash: "{git_hash}"
+cwd: "{cwd}"
+---
+
+# Goal
+
+# Context
+
+# Constraints
+
+# Acceptance criteria
+'''
 
 
 def get_git_short_hash() -> str:
@@ -59,19 +75,39 @@ def resolve_unique_filepath(directory: Path, base_filename: str) -> Path:
         counter += 1
 
 
-def generate_template(created_at: str, git_hash: str, cwd: str) -> str:
-    """Generate the markdown template content."""
-    return f'''---
-created_at: "{created_at}"
-git_hash: "{git_hash}"
-cwd: "{cwd}"
----
+def find_template() -> Optional[Path]:
+    """Find a custom template file.
 
-# Goal
+    Search order:
+    1. .pm/template.md in current directory (local/repo template)
+    2. ~/.pm/template.md (global template)
 
-# Context
+    Returns None if no custom template is found.
+    """
+    # Check local template first
+    local_template = Path.cwd() / ".pm" / "template.md"
+    if local_template.is_file():
+        return local_template
 
-# Constraints
+    # Check global template
+    global_template = Path.home() / ".pm" / "template.md"
+    if global_template.is_file():
+        return global_template
 
-# Acceptance criteria
-'''
+    return None
+
+
+def load_template() -> str:
+    """Load the template content.
+
+    Uses custom template if found, otherwise returns default.
+    """
+    template_path = find_template()
+    if template_path:
+        return template_path.read_text()
+    return DEFAULT_TEMPLATE
+
+
+def render_template(template: str, created_at: str, git_hash: str, cwd: str) -> str:
+    """Render a template with the given variables."""
+    return template.format(created_at=created_at, git_hash=git_hash, cwd=cwd)

@@ -12,9 +12,10 @@ from rich.console import Console
 from prompt_manager_cli.utils import (
     format_iso_timestamp,
     generate_filename,
-    generate_template,
     get_git_short_hash,
     get_local_timestamp,
+    load_template,
+    render_template,
     resolve_unique_filepath,
 )
 
@@ -26,7 +27,7 @@ app = typer.Typer(
 )
 console = Console()
 
-DEFAULT_DIR = ".prompt-manager/prompts"
+DEFAULT_DIR = ".pm/prompts"
 
 
 @app.callback()
@@ -66,8 +67,10 @@ def new(
         base_filename = generate_filename(now, git_hash)
         filepath = resolve_unique_filepath(output_dir, base_filename)
 
-        # Generate and write content
-        content = generate_template(
+        # Load template and render content
+        template = load_template()
+        content = render_template(
+            template=template,
             created_at=format_iso_timestamp(now),
             git_hash=git_hash,
             cwd=str(Path.cwd().absolute()),
