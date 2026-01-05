@@ -5,7 +5,11 @@ A CLI tool to create and organize prompt files for code agents (Claude Code, Cod
 ## Installation
 
 ```bash
-pip install prompt-manager-cli
+# using uv
+uv tool install prompt-manager-cli
+
+# using pip 
+pipx install prompt-manager-cli
 ```
 
 Or install in editable mode for development:
