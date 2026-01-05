@@ -8,6 +8,7 @@ import pytest
 from typer.testing import CliRunner
 
 from prompt_manager_cli.cli import app
+from prompt_manager_cli.utils import DEFAULT_TEMPLATE
 
 runner = CliRunner()
 
@@ -167,3 +168,46 @@ class TestNewCommand:
 
         content = files[0].read_text()
         assert 'git_hash: "nogit"' in content
+
+
+class TestInitCommand:
+    """Tests for the 'init' command."""
+
+    def test_creates_template_file(self, tmp_path):
+        """Test that pm init creates .pm/template.md."""
+        template_file = tmp_path / ".pm" / "template.md"
+        assert not template_file.exists()
+
+        with patch("prompt_manager_cli.cli.Path.cwd", return_value=tmp_path):
+            result = runner.invoke(app, ["init"])
+
+        assert result.exit_code == 0
+        assert template_file.exists()
+        assert template_file.read_text() == DEFAULT_TEMPLATE
+        assert "Created:" in result.output
+
+    def test_does_not_overwrite_existing_template(self, tmp_path):
+        """Test that pm init does not overwrite existing template."""
+        pm_dir = tmp_path / ".pm"
+        pm_dir.mkdir()
+        template_file = pm_dir / "template.md"
+        custom_content = "# My Custom Template"
+        template_file.write_text(custom_content)
+
+        with patch("prompt_manager_cli.cli.Path.cwd", return_value=tmp_path):
+            result = runner.invoke(app, ["init"])
+
+        assert result.exit_code == 0
+        assert template_file.read_text() == custom_content
+        assert "Already exists:" in result.output
+
+    def test_creates_pm_directory_if_missing(self, tmp_path):
+        """Test that pm init creates .pm directory if it doesn't exist."""
+        pm_dir = tmp_path / ".pm"
+        assert not pm_dir.exists()
+
+        with patch("prompt_manager_cli.cli.Path.cwd", return_value=tmp_path):
+            result = runner.invoke(app, ["init"])
+
+        assert result.exit_code == 0
+        assert pm_dir.exists()

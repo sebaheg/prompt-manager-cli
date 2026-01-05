@@ -16,6 +16,14 @@ pip install -e ".[dev]"
 
 ## Usage
 
+### Initialize a project
+
+```bash
+pm init
+```
+
+This creates `.pm/template.md` with the default template. Edit this file to customize your prompts.
+
 ### Create a new prompt file
 
 ```bash
@@ -60,12 +68,9 @@ The `--edit` flag uses `$VISUAL` or `$EDITOR` environment variables to determine
 
 ## Custom Templates
 
-You can customize the prompt template by creating a `template.md` file:
+Run `pm init` to create `.pm/template.md` with the default template, then edit it to customize your prompts.
 
-- **Local template** (per-repo): `.pm/template.md`
-- **Global template** (all repos): `~/.pm/template.md`
-
-Local templates take precedence over global templates.
+You can also create a global template at `~/.pm/template.md` for use across all projects. Local templates take precedence over global templates.
 
 ### Template Variables
 

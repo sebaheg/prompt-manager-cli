@@ -10,6 +10,7 @@ import typer
 from rich.console import Console
 
 from prompt_manager_cli.utils import (
+    DEFAULT_TEMPLATE,
     format_iso_timestamp,
     generate_filename,
     get_git_short_hash,
@@ -34,6 +35,28 @@ DEFAULT_DIR = ".pm/prompts"
 def callback() -> None:
     """A CLI tool to create and organize prompt files for code agents."""
     pass
+
+
+@app.command("init")
+def init() -> None:
+    """Initialize .pm directory with default template."""
+    try:
+        pm_dir = Path.cwd() / ".pm"
+        template_file = pm_dir / "template.md"
+
+        if template_file.exists():
+            console.print(f"[yellow]Already exists:[/yellow] {template_file}")
+            raise typer.Exit(code=0)
+
+        pm_dir.mkdir(parents=True, exist_ok=True)
+        template_file.write_text(DEFAULT_TEMPLATE)
+        console.print(f"[green]Created:[/green] {template_file}")
+
+    except typer.Exit:
+        raise
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}", style="bold red")
+        raise typer.Exit(code=1)
 
 
 @app.command("new")
