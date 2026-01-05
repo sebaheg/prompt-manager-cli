@@ -30,28 +30,18 @@ This creates `.pm/template.md` with the default template. Edit this file to cust
 pm new
 ```
 
-This creates a new Markdown file in `.pm/prompts/` with a timestamped filename:
+This creates a new Markdown file in `.pm/prompts/` and opens it in your editor.
 
 ```
 prompt-2026-01-05-14-37-a1b2c3d.md
 ```
 
-The file contains a template with metadata:
+You can specify the editor directly:
 
-```markdown
----
-created_at: "2026-01-05T14:37:00+01:00"
-git_hash: "a1b2c3d"
-cwd: "/path/to/your/project"
----
-
-# Goal
-
-# Context
-
-# Constraints
-
-# Acceptance criteria
+```bash
+pm new micro
+pm new code
+pm new vim
 ```
 
 ### Options
@@ -60,11 +50,29 @@ cwd: "/path/to/your/project"
 # Specify a custom output directory
 pm new --dir ./my-prompts
 
-# Open the file in your editor after creation
-pm new --edit
+# Combine editor and directory
+pm new micro --dir ./my-prompts
 ```
 
-The `--edit` flag uses `$VISUAL` or `$EDITOR` environment variables to determine which editor to use.
+## Editor Configuration
+
+The editor is resolved in this order:
+
+1. **Command argument**: `pm new micro`
+2. **Local config**: `.pm/editor` (per-repo)
+3. **Environment**: `$PM_EDITOR` (global)
+
+To set your default editor, add to your shell profile (`.bashrc`, `.zshrc`, etc.):
+
+```bash
+export PM_EDITOR="micro"
+```
+
+To override per-project:
+
+```bash
+echo "code" > .pm/editor
+```
 
 ## Custom Templates
 

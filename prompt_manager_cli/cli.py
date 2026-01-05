@@ -31,6 +31,24 @@ console = Console()
 DEFAULT_DIR = ".pm/prompts"
 
 
+def get_editor() -> Optional[str]:
+    """Get the configured editor.
+
+    Priority:
+    1. .pm/editor (local/repo config)
+    2. $PM_EDITOR environment variable
+    """
+    # Check local config
+    local_editor = Path.cwd() / ".pm" / "editor"
+    if local_editor.is_file():
+        editor = local_editor.read_text().strip()
+        if editor:
+            return editor
+
+    # Fall back to environment variable
+    return os.environ.get("PM_EDITOR")
+
+
 @app.callback()
 def callback() -> None:
     """A CLI tool to create and organize prompt files for code agents."""
@@ -61,20 +79,18 @@ def init() -> None:
 
 @app.command("new")
 def new(
+    editor: Optional[str] = typer.Argument(
+        None,
+        help="Editor to open the file with. Overrides config and environment.",
+    ),
     dir: Optional[Path] = typer.Option(
         None,
         "--dir",
         "-d",
         help=f"Output directory for the prompt file. Default: {DEFAULT_DIR}",
     ),
-    edit: bool = typer.Option(
-        False,
-        "--edit",
-        "-e",
-        help="Open the created file in your editor ($VISUAL or $EDITOR).",
-    ),
 ) -> None:
-    """Create a new prompt file with a timestamped filename."""
+    """Create a new prompt file and open it in your editor."""
     try:
         # Determine output directory
         output_dir = Path(dir) if dir else Path.cwd() / DEFAULT_DIR
@@ -103,11 +119,16 @@ def new(
         # Print success message
         console.print(f"[green]Created:[/green] {filepath}")
 
-        # Open in editor if requested
-        if edit:
-            editor = os.environ.get("VISUAL") or os.environ.get("EDITOR")
-            if editor:
-                subprocess.run([editor, str(filepath)])
+        # Determine editor: argument > config > environment
+        resolved_editor = editor or get_editor()
+
+        # Open in editor
+        if resolved_editor:
+            subprocess.run([resolved_editor, str(filepath)])
+        else:
+            console.print(
+                "[dim]Tip: Set your editor in .pm/editor or $PM_EDITOR[/dim]"
+            )
 
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}", style="bold red")

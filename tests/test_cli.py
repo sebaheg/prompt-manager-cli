@@ -104,55 +104,101 @@ class TestNewCommand:
         assert result.exit_code == 0
         assert "Created:" in result.output
 
-    def test_edit_flag_opens_editor(self, tmp_path):
-        """Test that --edit flag triggers editor."""
+    def test_opens_editor_from_argument(self, tmp_path):
+        """Test that editor argument opens the specified editor."""
         output_dir = tmp_path / "prompts"
 
         with patch("prompt_manager_cli.cli.Path.cwd", return_value=tmp_path):
             with patch("prompt_manager_cli.cli.get_git_short_hash", return_value="abc"):
-                with patch.dict(os.environ, {"VISUAL": "vim"}):
-                    with patch("prompt_manager_cli.cli.subprocess.run") as mock_run:
-                        result = runner.invoke(app, ["new", "--dir", str(output_dir), "--edit"])
+                with patch("prompt_manager_cli.cli.subprocess.run") as mock_run:
+                    result = runner.invoke(app, ["new", "micro", "--dir", str(output_dir)])
 
         assert result.exit_code == 0
         mock_run.assert_called_once()
         call_args = mock_run.call_args[0][0]
-        assert call_args[0] == "vim"
+        assert call_args[0] == "micro"
         assert call_args[1].endswith(".md")
 
-    def test_edit_flag_uses_editor_fallback(self, tmp_path):
-        """Test that --edit uses EDITOR if VISUAL not set."""
+    def test_opens_editor_from_local_config(self, tmp_path):
+        """Test that editor is read from .pm/editor."""
         output_dir = tmp_path / "prompts"
+        pm_dir = tmp_path / ".pm"
+        pm_dir.mkdir()
+        (pm_dir / "editor").write_text("code")
 
         with patch("prompt_manager_cli.cli.Path.cwd", return_value=tmp_path):
             with patch("prompt_manager_cli.cli.get_git_short_hash", return_value="abc"):
-                # Remove VISUAL if present, set only EDITOR
-                env = os.environ.copy()
-                env.pop("VISUAL", None)
-                env["EDITOR"] = "nano"
-                with patch.dict(os.environ, env, clear=True):
-                    with patch("prompt_manager_cli.cli.subprocess.run") as mock_run:
-                        result = runner.invoke(app, ["new", "--dir", str(output_dir), "--edit"])
+                with patch("prompt_manager_cli.cli.subprocess.run") as mock_run:
+                    result = runner.invoke(app, ["new", "--dir", str(output_dir)])
 
         assert result.exit_code == 0
         mock_run.assert_called_once()
+        call_args = mock_run.call_args[0][0]
+        assert call_args[0] == "code"
+
+    def test_local_config_takes_precedence_over_env(self, tmp_path):
+        """Test that .pm/editor takes precedence over $PM_EDITOR."""
+        output_dir = tmp_path / "prompts"
+        pm_dir = tmp_path / ".pm"
+        pm_dir.mkdir()
+        (pm_dir / "editor").write_text("micro")
+
+        with patch("prompt_manager_cli.cli.Path.cwd", return_value=tmp_path):
+            with patch("prompt_manager_cli.cli.get_git_short_hash", return_value="abc"):
+                with patch.dict(os.environ, {"PM_EDITOR": "vim"}):
+                    with patch("prompt_manager_cli.cli.subprocess.run") as mock_run:
+                        result = runner.invoke(app, ["new", "--dir", str(output_dir)])
+
+        assert result.exit_code == 0
+        call_args = mock_run.call_args[0][0]
+        assert call_args[0] == "micro"
+
+    def test_editor_argument_takes_precedence(self, tmp_path):
+        """Test that editor argument takes precedence over config."""
+        output_dir = tmp_path / "prompts"
+        pm_dir = tmp_path / ".pm"
+        pm_dir.mkdir()
+        (pm_dir / "editor").write_text("vim")
+
+        with patch("prompt_manager_cli.cli.Path.cwd", return_value=tmp_path):
+            with patch("prompt_manager_cli.cli.get_git_short_hash", return_value="abc"):
+                with patch("prompt_manager_cli.cli.subprocess.run") as mock_run:
+                    result = runner.invoke(app, ["new", "nano", "--dir", str(output_dir)])
+
+        assert result.exit_code == 0
         call_args = mock_run.call_args[0][0]
         assert call_args[0] == "nano"
 
-    def test_edit_flag_no_editor_does_nothing(self, tmp_path):
-        """Test that --edit does nothing if no editor is set."""
+    def test_falls_back_to_environment_variable(self, tmp_path):
+        """Test that PM_EDITOR is used if no config exists."""
         output_dir = tmp_path / "prompts"
 
         with patch("prompt_manager_cli.cli.Path.cwd", return_value=tmp_path):
             with patch("prompt_manager_cli.cli.get_git_short_hash", return_value="abc"):
-                # Clear both VISUAL and EDITOR
-                env = {k: v for k, v in os.environ.items() if k not in ("VISUAL", "EDITOR")}
+                with patch.dict(os.environ, {"PM_EDITOR": "micro"}):
+                    with patch("prompt_manager_cli.cli.subprocess.run") as mock_run:
+                        result = runner.invoke(app, ["new", "--dir", str(output_dir)])
+
+        assert result.exit_code == 0
+        mock_run.assert_called_once()
+        call_args = mock_run.call_args[0][0]
+        assert call_args[0] == "micro"
+
+    def test_shows_tip_when_no_editor_configured(self, tmp_path):
+        """Test that a tip is shown when no editor is configured."""
+        output_dir = tmp_path / "prompts"
+
+        with patch("prompt_manager_cli.cli.Path.cwd", return_value=tmp_path):
+            with patch("prompt_manager_cli.cli.get_git_short_hash", return_value="abc"):
+                # Clear PM_EDITOR environment variable
+                env = {k: v for k, v in os.environ.items() if k != "PM_EDITOR"}
                 with patch.dict(os.environ, env, clear=True):
                     with patch("prompt_manager_cli.cli.subprocess.run") as mock_run:
-                        result = runner.invoke(app, ["new", "--dir", str(output_dir), "--edit"])
+                        result = runner.invoke(app, ["new", "--dir", str(output_dir)])
 
         assert result.exit_code == 0
         mock_run.assert_not_called()
+        assert "Tip:" in result.output
 
     def test_nogit_hash_when_not_in_repo(self, tmp_path):
         """Test that 'nogit' is used when not in a git repository."""
