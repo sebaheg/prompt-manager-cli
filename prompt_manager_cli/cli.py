@@ -9,6 +9,7 @@ from typing import Optional
 import typer
 from rich.console import Console
 
+from prompt_manager_cli import __version__
 from prompt_manager_cli.utils import (
     DEFAULT_TEMPLATE,
     copy_to_clipboard,
@@ -50,8 +51,24 @@ def get_editor() -> Optional[str]:
     return os.environ.get("PM_EDITOR")
 
 
+def version_callback(value: bool) -> None:
+    """Print the version and exit."""
+    if value:
+        console.print(f"pm version {__version__}")
+        raise typer.Exit()
+
+
 @app.callback()
-def callback() -> None:
+def callback(
+    version: Optional[bool] = typer.Option(
+        None,
+        "--version",
+        "-v",
+        callback=version_callback,
+        is_eager=True,
+        help="Show version and exit.",
+    ),
+) -> None:
     """A CLI tool to create and organize prompt files for code agents."""
     pass
 

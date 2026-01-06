@@ -4,10 +4,17 @@ git_hash: "{git_hash}"
 cwd: "{cwd}"
 ---
 
-# Goal
+# Actor
+You are a senior software engineer.
 
-# Context
+# Context and goals
 
-# Constraints
+# Tools, APIs, docs and keys
+- This repo is using uv for package management and virtual environments [uv](https://docs.astral.sh/uv/). The virtual environment is named `.venv`.
 
-# Acceptance criteria
+# Constraints and guidelines
+- The developed code should strive for high readability and maintainability.
+
+# Success metrics
+
+# Future intentions
