@@ -1,6 +1,7 @@
 """Utility functions for prompt-manager-cli."""
 
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -118,3 +119,47 @@ def load_template() -> str:
 def render_template(template: str, created_at: str, git_hash: str, cwd: str) -> str:
     """Render a template with the given variables."""
     return template.format(created_at=created_at, git_hash=git_hash, cwd=cwd)
+
+
+def copy_to_clipboard(text: str) -> bool:
+    """Copy text to system clipboard.
+
+    Cross-platform support:
+    - macOS: pbcopy
+    - Linux: xclip or xsel
+    - Windows: clip
+
+    Returns True if successful, False otherwise.
+    """
+    try:
+        if sys.platform == "darwin":
+            # macOS
+            subprocess.run(
+                ["pbcopy"],
+                input=text.encode(),
+                check=True,
+            )
+        elif sys.platform == "win32":
+            # Windows
+            subprocess.run(
+                ["clip"],
+                input=text.encode(),
+                check=True,
+            )
+        else:
+            # Linux - try xclip first, then xsel
+            try:
+                subprocess.run(
+                    ["xclip", "-selection", "clipboard"],
+                    input=text.encode(),
+                    check=True,
+                )
+            except FileNotFoundError:
+                subprocess.run(
+                    ["xsel", "--clipboard", "--input"],
+                    input=text.encode(),
+                    check=True,
+                )
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False

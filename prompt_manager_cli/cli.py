@@ -11,6 +11,7 @@ from rich.console import Console
 
 from prompt_manager_cli.utils import (
     DEFAULT_TEMPLATE,
+    copy_to_clipboard,
     format_iso_timestamp,
     generate_filename,
     get_git_short_hash,
@@ -129,6 +130,14 @@ def new(
             console.print(
                 "[dim]Tip: Set your editor in .pm/editor or $PM_EDITOR[/dim]"
             )
+
+        # Copy relative path to clipboard
+        try:
+            relative_path = filepath.relative_to(Path.cwd())
+        except ValueError:
+            relative_path = filepath
+        if copy_to_clipboard(str(relative_path)):
+            console.print(f"[blue]Copied to clipboard:[/blue] {relative_path}")
 
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}", style="bold red")
